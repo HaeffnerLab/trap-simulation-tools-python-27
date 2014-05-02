@@ -1,13 +1,13 @@
 """This is all functions and scripts used by the simulation. All relevant abstraction in project_parameters and analyze_trap."""
 
 # Functions to absorb as helpers?: 
-# d_e to ppt3
-# meshslice to plotpot
-# spherharmcmp to spherharmq
+# d_e to post_process_trap
+# mesh_slice to plot_potential
+# spher_harm_cmp to spher_harm_qlt
 # plotN to trap_knobs
-# sumofefield to exactsaddle
-# p2d and trapdepth to pfit
-# pfit to ppt3
+# sum_of_e_field to exact_saddle
+# p2d and trap_depth to pfit
+# pfit to post_process_trap
 
 # Primary Functions (helpers contained within them)
 def import_data():
@@ -158,11 +158,11 @@ def import_data():
         if debug: # Plot the RF potential
             Ef = sim['EL_DC_{}'.format(em[iii+1,1])]  
             E=np.zeros((na,na))
-            from all_functions import plotpot
+            from all_functions import plot_potential
             import matplotlib.pyplot as plt
             from matplotlib import cm
             import mpl_toolkits.mplot3d.axes3d as p3
-            print(plotpot(Ef,X,Y,Z,'1D plots','Debug: RF Plot sim{}'.format(iterationNumber)))
+            print(plot_potential(Ef,X,Y,Z,'1D plots','Debug: RF Plot sim{}'.format(iterationNumber)))
             for a in range(na):
                 for b in range(na):
                      E[a,b] = Ef[a,b,na-1]
@@ -372,7 +372,7 @@ def expand_field():
     from project_parameters import trap,Xcorrection,Ycorrection,L,NUM_DC,NUM_Center,save,debug,name
     print save,debug
     from project_parameters import dcVoltages,manualElectrodes,weightElectrodes,E
-    from all_functions import spherharmxp,spherharmcmp,spherharmq,findsaddle,exactsaddle,plotpot,dcpotential_instance
+    from all_functions import spher_harm_exp,spher_harm_cmp,spher_harm_qlt,find_saddle,exact_saddle,plot_potential,dc_potential
     import numpy as np
     import pickle, pprint
     file = open(trap,'rb')
@@ -387,8 +387,8 @@ def expand_field():
         VMULT= dcVoltages       #all 1
         VMAN = manualElectrodes #all 0
         IMAN = weightElectrodes #all 0
-        # run dcpotential_instance to create instance configuration
-        dcpotential_instance(trap,VMULT,VMAN,IMAN,E,True)
+        # run dc_potential to create instance configuration
+        dc_potential(trap,VMULT,VMAN,IMAN,E,True)
     # open updated trap
     file = open(trap,'rb')
     tf = pickle.load(file)
@@ -398,10 +398,10 @@ def expand_field():
     X=tf.instance.X
     Y=tf.instance.Y
     Z=tf.instance.Z
-    origin=findsaddle(V,X,Y,Z,3)
+    origin=find_saddle(V,X,Y,Z,3)
     print tf.instance.check!=True
     if debug:
-        plotpot(V,X,Y,Z,'1D plots','V.DC',origin)
+        plot_potential(V,X,Y,Z,'1D plots','V.DC',origin)
     
     tc=tf.configuration #intermediate configuration
     position = tc.position
@@ -421,23 +421,23 @@ def expand_field():
     Irf,Jrf,Krf = int(np.floor(X.shape[0]/2)),int(np.floor(Y.shape[0]/2)),int(np.floor(Z.shape[0]/2))
     Xrf,Yrf,Zrf = X[Irf],Y[Jrf],Z[Krf]
     if debug:
-        plotpot(tc.EL_RF,X,Y,Z,'1D plots','initial EL_RF',[Irf,Jrf,Krf])
-    Qrf = spherharmxp(tc.EL_RF,Xrf,Yrf,Zrf,X,Y,Z,L)
+        plot_potential(tc.EL_RF,X,Y,Z,'1D plots','initial EL_RF',[Irf,Jrf,Krf])
+    Qrf = spher_harm_exp(tc.EL_RF,Xrf,Yrf,Zrf,X,Y,Z,L)
     
     print 'Comparing RF potential'
-    tc.EL_RF = spherharmcmp(Qrf,Xrf,Yrf,Zrf,X,Y,Z,L)
+    tc.EL_RF = spher_harm_cmp(Qrf,Xrf,Yrf,Zrf,X,Y,Z,L)
     if debug:
-        plotpot(tc.EL_RF,X,Y,Z,'1D plots','preflip EL_RF',[Irf,Jrf,Krf])
+        plot_potential(tc.EL_RF,X,Y,Z,'1D plots','preflip EL_RF',[Irf,Jrf,Krf])
     tc.EL_RF=np.fliplr(tc.EL_RF)
     tc.EL_RF=np.flipud(tc.EL_RF)
     if debug: 
-        plotpot(tc.EL_RF,X,Y,Z,'1D plots','EL_RF',[Irf,Jrf,Krf])
+        plot_potential(tc.EL_RF,X,Y,Z,'1D plots','EL_RF',[Irf,Jrf,Krf])
   
     #2) Expand the rf about its saddle point at the trapping position, save the quadrupole components.
     print 'Expanding RF about saddle point'
-    [Xrf,Yrf,Zrf] = exactsaddle(tc.EL_RF,X,Y,Z,2,position) 
-    [Irf,Jrf,Krf] = findsaddle(tc.EL_RF,X,Y,Z,2,position) 
-    Qrf = spherharmxp(tc.EL_RF,Xrf+Xcorrection,Yrf+Xcorrection,Zrf,X,Y,Z,L)  
+    [Xrf,Yrf,Zrf] = exact_saddle(tc.EL_RF,X,Y,Z,2,position) 
+    [Irf,Jrf,Krf] = find_saddle(tc.EL_RF,X,Y,Z,2,position) 
+    Qrf = spher_harm_exp(tc.EL_RF,Xrf+Xcorrection,Yrf+Xcorrection,Zrf,X,Y,Z,L)  
     tc.Qrf = 2*[Qrf[7][0]*3,Qrf[4][0]/2,Qrf[8][0]*6,-Qrf[6][0]*3,-Qrf[5][0]*3]
     tc.thetaRF = 45*((Qrf[8][0]/abs(Qrf[8][0])))-90*np.arctan((3*Qrf[7][0])/(3*Qrf[8][0]))/np.pi
     
@@ -450,16 +450,16 @@ def expand_field():
             multipoleDCVoltages[el] = 1 
             Vdc = tf.potentials['EL_DC_{}'.format(el+1)]
 #             if debug:
-#                 plotpot(Vdc,X,Y,Z,'1D plots',('pre EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
-#             Vdc = dcpotential_instance(trap,multipoleDCVoltages,np.zeros(NUM_DC),np.zeros(NUM_DC),E) 
+#                 plot_potential(Vdc,X,Y,Z,'1D plots',('pre EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
+#             Vdc = dc_potential(trap,multipoleDCVoltages,np.zeros(NUM_DC),np.zeros(NUM_DC),E) 
             if debug:
-                plotpot(Vdc,X,Y,Z,'1D plots',('EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
+                plot_potential(Vdc,X,Y,Z,'1D plots',('EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
             print ('Applying correction to Electrode {} ...'.format(el+1))
-            Q = spherharmxp(Vdc,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))                       
+            Q = spher_harm_exp(Vdc,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))                       
             print ('Regenerating Electrode {} potential...'.format(el+1))
-            tf.potentials['EL_DC_{}'.format(el+1)]=spherharmcmp(Q,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))
+            tf.potentials['EL_DC_{}'.format(el+1)]=spher_harm_cmp(Q,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))
             if debug:
-                plotpot(Vdc,X,Y,Z,'1D plots',('post EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
+                plot_potential(Vdc,X,Y,Z,'1D plots',('post EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
             print 'electrode',el+1
             check = np.real(Q[0:N].T)[0]
             iii = 0
@@ -476,13 +476,13 @@ def expand_field():
           manualDCVoltages = np.zeros(NUM_DC)
           manualDCVoltages[el]  = 1 
           print ('Building new trap instance for Electrolde {}...'.format(el+1))
-          Vdc = dcpotential_instance(multipoleDCVoltages,manualDCVoltages,tc.manualElectrodes,E[0],E[1],E[2],NUM_DC,x,y,z)
+          Vdc = dc_potential(multipoleDCVoltages,manualDCVoltages,tc.manualElectrodes,E[0],E[1],E[2],NUM_DC,x,y,z)
           if debug:
-              plotpot(Vdc,Irf,Jrf,Krf,'1D plots',sprintf('EL_{} DC Potential'.format(el)),'V (Volt)')
+              plot_potential(Vdc,Irf,Jrf,Krf,'1D plots',sprintf('EL_{} DC Potential'.format(el)),'V (Volt)')
           print ('Applying correction to Electrode {} ...'.format(el+1))
-          Q = spherharmxp(Vdc,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))                        
+          Q = spher_harm_exp(Vdc,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))                        
           print ('Regenerating Electrode {} potential...'.format(el+1))
-          tf.potentials['EL_DC_{}'.format(el+1)] = spherharmcmp(Q,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))
+          tf.potentials['EL_DC_{}'.format(el+1)] = spher_harm_cmp(Q,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))
     
     # Note: There used to be an auxilliary fuinction here that was not used: normalize.
     #4) Define the multipole Coefficients
@@ -632,7 +632,7 @@ def trap_knobs():
 def set_dc():
     """Provides the DC voltages for all DC electrodes to be set to. 
     Uses parameters and voltage controls from analyze_trap.
-    Output an array of values to set each electrode; used as VMULT for dcpotential_instance in ppt3.
+    Output an array of values to set each electrode; used as VMULT for dc_potential in post_process_trap.
     The Ui and Ei values control the weighting of each term of the multipole expansion.
     Nikos, July 2009
     Cleaned up October 2013
@@ -687,13 +687,13 @@ def set_dc():
         
     return el
 
-def ppt3():
+def post_process_trap():
     """A post processing tool that analyzes the trap. This is the highest order function.
     It plots an input trap in a manner of ways and returns the frequencies and positions determined by pfit.
     Before 2/19/14, it was far more complicated. See ppt2 for the past version and variable names.
     All necessary configuration parameters should be defined by dcpotential instance, trap knobs, and so on prior to use.
     
-    Change rfplot and dcplot to control the "dim" input to plotpot for plotting the potential fields.
+    Change rfplot and dcplot to control the "dim" input to plot_potential for plotting the potential fields.
     
     There is also an option to run findEfield. This determines the stray electric field for given DC voltages.
     
@@ -704,7 +704,7 @@ def ppt3():
     from project_parameters import manualElectrodes,weightElectrodes,save,debug
     from project_parameters import trap,driveAmplitude,driveFrequency,findEfield,justAnalyzeTrap,rfplot,dcplot
     from analyze_trap import E,U1,U2,U3,U4,U5,ax,az,phi
-    from all_functions import findsaddle,exactsaddle,plotpot,dcpotential_instance,d_e,pfit,spherharmxp
+    from all_functions import find_saddle,exact_saddle,plot_potential,dc_potential,d_e,pfit,spher_harm_exp
     import numpy as np
     import pickle, pprint
     file = open(trap,'rb')
@@ -714,7 +714,7 @@ def ppt3():
     VMULT = set_dc()
     VMAN = manualElectrodes
     IMAN = weightElectrodes
-    tf.instance.DC = dcpotential_instance(trap,VMULT,VMAN,IMAN,E,True) 
+    tf.instance.DC = dc_potential(trap,VMULT,VMAN,IMAN,E,True) 
     V=tf.instance.DC                # old VELDC
     X=tf.instance.X                 # grid vector
     Y=tf.instance.Y                 # grid vector
@@ -733,24 +733,24 @@ def ppt3():
     [x,y,z] = np.meshgrid(X,Y,Z)
 
     #################### 1) analyze the RF potential #################### 
-    [Irf,Jrf,Krf] = findsaddle(data.EL_RF,X,Y,Z,2,Zval)
+    [Irf,Jrf,Krf] = find_saddle(data.EL_RF,X,Y,Z,2,Zval)
     Vrf = RFampl*data.EL_RF
     
-    plotpot(V,X,Y,Z,rfplot,'initial V','V_{rf} (Volt)',[Irf,Jrf,Krf])
+    plot_potential(V,X,Y,Z,rfplot,'initial V','V_{rf} (Volt)',[Irf,Jrf,Krf])
     
-    plotpot(Vrf,X,Y,Z,rfplot,'RF potential','V_{rf} (Volt)',[Irf,Jrf,Krf])
+    plot_potential(Vrf,X,Y,Z,rfplot,'RF potential','V_{rf} (Volt)',[Irf,Jrf,Krf])
     if E == None:      # check the initial guess of the E field
-        return 'There is no E field. Create an instance with dcpotential_instance.'
+        return 'There is no E field. Create an instance with dc_potential.'
     else:
-        Vdc = dcpotential_instance(trap,VMULT,VMAN,IMAN,E)                                                         
-        [Idum,Jdum,Kdum] =  findsaddle(Vdc,X,Y,Z,2,Zval)
-        plotpot(Vdc,X,Y,Z,dcplot,'DC potential (stray field included)','V_{dc} (Volt)',[Idum,Jdum,Kdum])
+        Vdc = dc_potential(trap,VMULT,VMAN,IMAN,E)                                                         
+        [Idum,Jdum,Kdum] =  find_saddle(Vdc,X,Y,Z,2,Zval)
+        plot_potential(Vdc,X,Y,Z,dcplot,'DC potential (stray field included)','V_{dc} (Volt)',[Idum,Jdum,Kdum])
         
     #################### 2) findEfield ####################
     def findE(Efield,x,y,z,X,Y,Z):
-        """Temporarily a helper function. Will likely become this entirely if not simply cut from ppt3."""
-        from all_functions import d_e,findsaddle,plotpot,dcpotential_instance
-        Vdc = dcpotential_instance(trap,VMULT,VMAN,IMAN,E)  
+        """Temporarily a helper function. Will likely become this entirely if not simply cut from post_process_trap."""
+        from all_functions import d_e,find_saddle,plot_potential,dc_potential
+        Vdc = dc_potential(trap,VMULT,VMAN,IMAN,E)  
         Efield=[1,1,1]
         if np.sum(Efield)==0:
             E0=[0,0,0]
@@ -765,9 +765,9 @@ def ppt3():
             else:
                 E0=[0,0,0]
             dist0 = d_e(E0,Vdc,data,x,y,z,X,Y,Z,Zval)
-            Vdum = dcpotential_instance(trap,VMULT,VMAN,IMAN,E0[0],E0[1],E0[2])   
-            [Idum,Jdum,Kdum] =  findsaddle(Vdum,X,Y,Z,2,Zval)
-            plotpot(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Irf,Jrf,Krf])
+            Vdum = dc_potential(trap,VMULT,VMAN,IMAN,E0[0],E0[1],E0[2])   
+            [Idum,Jdum,Kdum] =  find_saddle(Vdum,X,Y,Z,2,Zval)
+            plot_potential(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Irf,Jrf,Krf])
             st = raw_input('Happy (y/n)?\n')
             if st=='y': 
                 print 'findEfield complete'
@@ -777,9 +777,9 @@ def ppt3():
         else:
             E0 = Efield
             dist0 = d_e(E0,Vdc,data,x,y,z,X,Y,Z,Zval)
-            Vdum = dcpotential_instance(trap,VMULT,VMAN,IMAN,E0[0],E)
-            [Idum,Jdum,Kdum] =  findsaddle(Vdum,X,Y,Z,2,Zval)
-            plotpot(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Idum,Jdum,Kdum])
+            Vdum = dc_potential(trap,VMULT,VMAN,IMAN,E0[0],E)
+            [Idum,Jdum,Kdum] =  find_saddle(Vdum,X,Y,Z,2,Zval)
+            plot_potential(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Idum,Jdum,Kdum])
             print 'findEfield complete'
             return dist0
     # actually find E field
@@ -802,29 +802,29 @@ def ppt3():
         return 
     #################### 3) justAnalyzeTrap ####################
     else: # this option means do not optimize anything, and just analyze the trap
-        print('Running ppt3 in plain analysis mode (no optimizations).')
+        print('Running post_process_trap in plain analysis mode (no optimizations).')
         dist = np.NaN
         dist = d_e(E,Vdc,data,x,y,z,X,Y,Z,Zval)
         print ('Stray field is ( {0}, {1}, {2}) V/m.'.format(1e3*E[0],1e3*E[1],1e3*E[2]))
         print ('With this field, the compensation is optimized to {} micron.'.format(1e3*dist))
-    Vdc = dcpotential_instance(trap,VMULT,VMAN,IMAN,E)
+    Vdc = dc_potential(trap,VMULT,VMAN,IMAN,E)
     # RF should be dim 2, DC dim 3
-    [XRF,YRF,ZRF] = exactsaddle(data.EL_RF,X,Y,Z,2,Zval)  
-    [XDC,YDC,ZDC] = exactsaddle(Vdc,X,Y,Z,3,Zval)
+    [XRF,YRF,ZRF] = exact_saddle(data.EL_RF,X,Y,Z,2,Zval)  
+    [XDC,YDC,ZDC] = exact_saddle(Vdc,X,Y,Z,3,Zval)
     # for debugging purposes
-    #[XRF,YRF,ZRF] = findsaddle(data.EL_RF,X,Y,Z,2,Zval)
-    #[XDC,YDC,ZDC] = findsaddle(Vdc,X,Y,Z,3,Zval)
+    #[XRF,YRF,ZRF] = find_saddle(data.EL_RF,X,Y,Z,2,Zval)
+    #[XDC,YDC,ZDC] = find_saddle(Vdc,X,Y,Z,3,Zval)
     print ('RF saddle: ({0},{1},{2})\nDC saddle ({3},{4},{5}).'.format(XRF,YRF,ZRF,XDC,YDC,ZDC))
-    plotpot(Vdc,X,Y,Z,dcplot,'Compensated DC potential','V_{dc} (V)',[Irf,Jrf,Krf])
-    [IDC,JDC,KDC] = findsaddle(Vdc,X,Y,Z,2,Zval)
+    plot_potential(Vdc,X,Y,Z,dcplot,'Compensated DC potential','V_{dc} (V)',[Irf,Jrf,Krf])
+    [IDC,JDC,KDC] = find_saddle(Vdc,X,Y,Z,2,Zval)
     [fx,fy,fz,theta,Depth,rx,ry,rz,xe,ye,ze,superU] = pfit(trap,E,f,RFampl)
-    Qrf = spherharmxp(Vrf,XRF,YRF,ZRF,X,Y,Z,2)           
+    Qrf = spher_harm_exp(Vrf,XRF,YRF,ZRF,X,Y,Z,2)           
     if np.sqrt((XRF-XDC)**2+(YRF-YDC)**2+(ZRF-ZDC)**2)>0.008: 
         print 'Expanding DC with RF'
-        Qdc = spherharmxp(Vdc,XRF,YRF,ZRF,X,Y,Z,2) 
+        Qdc = spher_harm_exp(Vdc,XRF,YRF,ZRF,X,Y,Z,2) 
     else:
         print 'Expanding DC'
-        Qdc = spherharmxp(Vdc,XDC,YDC,ZDC,X,Y,Z,2) 
+        Qdc = spher_harm_exp(Vdc,XDC,YDC,ZDC,X,Y,Z,2) 
     # Sanity testing; quality check no longer used
     Arf = 2*np.sqrt( (3*Qrf[7])**2+(3*Qrf[8])**2 )
     Thetarf = 45*(Qrf[8]/abs(Qrf[8]))-90*np.arctan((3*Qrf[7])/(3*Qrf[8]))/np.pi
@@ -836,7 +836,7 @@ def ppt3():
     out.ionposIndex = [Irf,Jrf,Krf]
     out.f = [fx,fy,fz]
     out.theta = theta
-    out.trapdepth = Depth/qe 
+    out.trap_depth = Depth/qe 
     out.escapepos = [xe,ye,ze]
     out.Quadrf = 2*np.array([Qrf[7]*3,Qrf[4]/2,Qrf[8]*6,-Qrf[6]*3,-Qrf[5]*3])
     out.Quaddc = 2*np.array([Qdc[7]*3,Qdc[4]/2,Qdc[8]*6,-Qdc[6]*3,-Qdc[5]*3])
@@ -880,7 +880,7 @@ def ppt3():
 
 print('Referencing all_functions...')
 # Secondary Functions
-def dcpotential_instance(trap,VMULT,VMAN,IMAN,E,update=None):
+def dc_potential(trap,VMULT,VMAN,IMAN,E,update=None):
     """ Calculates the dc potential given the applied voltages and the stray field.
     Creates a third attribute of trap, called instance, a 3D matrix of potential values
     
@@ -943,18 +943,18 @@ def dcpotential_instance(trap,VMULT,VMAN,IMAN,E,update=None):
 def d_e(Ei,Vdc,data,x,y,z,X,Y,Z,Zval):
     """find the miscompensation distance, d_e, for the rf and dc potential 
     given in the main program, in the presence of stray field Ei"""
-    from all_functions import exactsaddle
+    from all_functions import exact_saddle
     import numpy as np 
     dm = Ei
     E1 = dm[0]
     E2 = dm[1]
     E3 = dm[2]
     Vl = Vdc-E1*x-E2*y-E3*z
-    from all_functions import plotpot
-    print plotpot(data.EL_RF,X,Y,Z,'1D plots','title','ylab',[0,0,0])
-    [Xrf,Yrf,Zrf] = exactsaddle(data.EL_RF,X,Y,Z,2,Zval)
-    #[Xdc,Ydc,Zdc] = exactsaddle(data.EL_RF,X,Y,Z,3) 
-    [Idc,Jdc,Kdc] = findsaddle(data.EL_RF,X,Y,Z,3) # no saddle point with exact
+    from all_functions import plot_potential
+    print plot_potential(data.EL_RF,X,Y,Z,'1D plots','title','ylab',[0,0,0])
+    [Xrf,Yrf,Zrf] = exact_saddle(data.EL_RF,X,Y,Z,2,Zval)
+    #[Xdc,Ydc,Zdc] = exact_saddle(data.EL_RF,X,Y,Z,3) 
+    [Idc,Jdc,Kdc] = find_saddle(data.EL_RF,X,Y,Z,3) # no saddle point with exact
     Xdc,Ydc,Zdc=X[Idc],Y[Jdc],Z[Kdc]
     f = np.sqrt((Xrf-Xdc)**2+(Yrf-Ydc)**2+(Zrf-Zdc)**2)
     return f
@@ -984,18 +984,18 @@ def pfit(trap,E,driveFrequence,driveAmplitude):
     file.close()
 
     #1) find dc potential
-    from all_functions import set_dc,plotpot,exactsaddle,findsaddle,p2d,trapdepth
+    from all_functions import set_dc,plot_potential,exact_saddle,find_saddle,p2d,trap_depth
     from project_parameters import dcVoltages,manualElectrodes,weightElectrodes,mp,qe,debug,driveFrequency,driveAmplitude
     dcVoltages=set_dc() #should this be set_dc or from analyze_trap? U is 0 with but no saddle without.
-    VL = dcpotential_instance(trap,dcVoltages,manualElectrodes,weightElectrodes,E)
+    VL = dc_potential(trap,dcVoltages,manualElectrodes,weightElectrodes,E)
     X=tf.instance.X
     Y=tf.instance.Y
     Z=tf.instance.Z
     Zval=tf.configuration.position
-    #[Xdc,Ydc,Zdc] = exactsaddle(VL,X,Y,Z,3) # debug comment out
-    [Idc,Jdc,Kdc] = findsaddle(VL,X,Y,Z,3)
+    #[Xdc,Ydc,Zdc] = exact_saddle(VL,X,Y,Z,3) # debug comment out
+    [Idc,Jdc,Kdc] = find_saddle(VL,X,Y,Z,3)
     [Xdc,Ydc,Zdc]=[X[Idc],Y[Jdc],Z[Kdc]]
-    [Irf,Jrf,Krf] = findsaddle(tf.potentials.EL_RF,X,Y,Z,2,Zval)
+    [Irf,Jrf,Krf] = find_saddle(tf.potentials.EL_RF,X,Y,Z,2,Zval)
     mass=mp
     Omega=2*np.pi*driveFrequency
     e=qe
@@ -1012,16 +1012,16 @@ def pfit(trap,E,driveFrequence,driveAmplitude):
     #3) plotting pseudopotential, etc; outdated?
     PseudoPhi = Esq1/(4*mass*Omega**2) 
     print 'Pseudo: ',np.amax(PseudoPhi)
-    plotpot(PseudoPhi,X,Y,Z,'1D plots','Pseudopotential','U_{ps} (eV)',[Irf,Jrf,Krf])
+    plot_potential(PseudoPhi,X,Y,Z,'1D plots','Pseudopotential','U_{ps} (eV)',[Irf,Jrf,Krf])
     
     print 'VL: ',np.amax(VL)
-    plotpot(VL,X,Y,Z,'1D plots','VL','U_{sec} (eV)',[Irf,Jrf,Krf])
+    plot_potential(VL,X,Y,Z,'1D plots','VL','U_{sec} (eV)',[Irf,Jrf,Krf])
     U = PseudoPhi*10**-6+VL*10**4 # total trap potential
     superU = U
     print 'TrapPotential: ',np.amax(U)
-    plotpot(U,X,Y,Z,'1D plots','TrapPotential','U_{sec} (eV)',[Irf,Jrf,Krf])
-    #[I,J,K] = findsaddle(U/np.amax(U),X,Y,Z,2,Zval) # ???
-    plotpot(tf.potentials.EL_RF,X,Y,Z,'1D plots','RF potential','(eV)',[Irf,Jrf,Krf])
+    plot_potential(U,X,Y,Z,'1D plots','TrapPotential','U_{sec} (eV)',[Irf,Jrf,Krf])
+    #[I,J,K] = find_saddle(U/np.amax(U),X,Y,Z,2,Zval) # ???
+    plot_potential(tf.potentials.EL_RF,X,Y,Z,'1D plots','RF potential','(eV)',[Irf,Jrf,Krf])
     
     #4) determine trap frequencies and tilt in radial directions
     Uxy = U[Irf-3:Irf+3,Jrf-3:Jrf+3,Krf]
@@ -1054,11 +1054,11 @@ def pfit(trap,E,driveFrequence,driveAmplitude):
         plt.ylabel('trap potential (J)')
         plt.show()
     fz = [(1e3/dL)*np.sqrt(2*p[5]*MU/(mass))/(2*np.pi)]
-    [Depth,Xe,Ye,Ze] = trapdepth(U,X,Y,Z,Irf,Jrf,Krf,debug=True) # divide by e to make U larger?     
+    [Depth,Xe,Ye,Ze] = trap_depth(U,X,Y,Z,Irf,Jrf,Krf,debug=True) # divide by e to make U larger?     
          
     return [fx,fy,fz,theta,Depth,Xdc,Ydc,Zdc,Xe,Ye,Ze,superU] 
 
-def exactsaddle(V,X,Y,Z,dim,Z0=None):
+def exact_saddle(V,X,Y,Z,dim,Z0=None):
     """This version finds the approximate saddle point using pseudopotential,
     does a multipole expansion around it, and finds the exact saddle point by
     maximizing the quadrupole terms. Similar to interpolation.
@@ -1076,26 +1076,26 @@ def exactsaddle(V,X,Y,Z,dim,Z0=None):
     
     import numpy as np
     import scipy.optimize as spo
-    from all_functions import findsaddle,sumofefield
+    from all_functions import find_saddle,sum_of_e_field
 
     if dim==3:
-        [I,J,K]=findsaddle(V,X,Y,Z,3) # guess saddle point; Z0 not needed
+        [I,J,K]=find_saddle(V,X,Y,Z,3) # guess saddle point; Z0 not needed
         print I,J,K
         if I<2 or I>V.shape[0]-2: 
-            print('exactsaddle.py: Saddle point out of bounds in radial direction.')
+            print('exact_saddle.py: Saddle point out of bounds in radial direction.')
             return
         if J<2 or J>V.shape[1]-2:
-            print('exactsaddle.py: Saddle point out of bounds in vertical direction.')
+            print('exact_saddle.py: Saddle point out of bounds in vertical direction.')
             return
         if K<2 or K>V.shape[2]-2:
-            print('exactsaddle.py: Saddle point out of bounds in axial direction.')
+            print('exact_saddle.py: Saddle point out of bounds in axial direction.')
             return
         Vn = V[I-2:I+3,J-2:J+3,K-2:K+3] # create smaller 5x5x5 grid around the saddle point to speed up optimization
         # note that this does not prevent the optimization function from trying values outside this
         Xn,Yn,Zn=X[I-2:I+3],Y[J-2:J+3],Z[K-2:K+3] # change grid vectors as well
         #################################### Minimize
         r0=[X[I],Y[J],Z[K]]
-        r=spo.minimize(sumofefield,r0,args=(Vn,Xn,Yn,Zn)) 
+        r=spo.minimize(sum_of_e_field,r0,args=(Vn,Xn,Yn,Zn)) 
         r=r.x # unpack for desired values
         Xs,Ys,Zs=r[0],r[1],r[2] 
     #################################################################################################    
@@ -1111,13 +1111,13 @@ def exactsaddle(V,X,Y,Z,dim,Z0=None):
         v1=V[:,:,K-1] # potential to left
         v2=V[:,:,K] # potential to right (actually right at estimate; K+1 to be actually to right)
         V2=v1+(v2-v1)*(Z0-Z[K-1])/(Z[K]-Z[K-1]) # averaged potential around given coordinate
-        [I,J,K0]=findsaddle(V,X,Y,Z,2,Z0) # should be K instead of Z0? 
+        [I,J,K0]=find_saddle(V,X,Y,Z,2,Z0) # should be K instead of Z0? 
         print I,J,K0
         if (I<2 or I>V.shape[0]-2): 
-            print('exactsaddle.py: Saddle point out of bounds in radial direction.\n')
+            print('exact_saddle.py: Saddle point out of bounds in radial direction.\n')
             return
         if (J<2 or J>V.shape[1]-2):
-            print('exactsaddle.py: Saddle point out of bounds in vertical direction.\n')
+            print('exact_saddle.py: Saddle point out of bounds in vertical direction.\n')
             return
         # This is not needed? Causes problems if I,J are too large (saddle point near edge).
 #         A = np.zeros((5,5,5))
@@ -1129,12 +1129,12 @@ def exactsaddle(V,X,Y,Z,dim,Z0=None):
         ################################## Minimize
         r0=X[I],Y[J],Z0
         print r0
-        r=spo.minimize(sumofefield,r0,args=(Vn,Xn,Yn,Zn)) 
+        r=spo.minimize(sum_of_e_field,r0,args=(Vn,Xn,Yn,Zn)) 
         r=r.x # unpack for desired values
         Xs,Ys,Zs=r[0],r[1],Z0
     return [Xs,Ys,Zs]
 
-def findsaddle(V,X,Y,Z,dim,Z0=None):
+def find_saddle(V,X,Y,Z,dim,Z0=None):
     """Returns the indices of the local extremum or saddle point of the scalar A as (Is,Js,Ks).
     V is a 3D matrix containing an electric potential and must solve Laplace's equation
     X,Y,Z are the vectors that define the grid in three directions
@@ -1153,7 +1153,7 @@ def findsaddle(V,X,Y,Z,dim,Z0=None):
     
     if dim==3:
         if len(V.shape)!=3:
-            return('Problem with findsaddle.m dimensionalities.')
+            return('Problem with find_saddle.m dimensionalities.')
         f=V/float(np.amax(V)) # Normalize field
         [Ex,Ey,Ez]=np.gradient(f) # grid spacing is automatically consistent thanks to BEM-solver
         E=np.sqrt(Ex**2+Ey**2+Ez**2) # magnitude of gradient (E field)
@@ -1193,13 +1193,13 @@ def findsaddle(V,X,Y,Z,dim,Z0=None):
             plt.title('Debugging: blue is sorted gradient, green is potential sorted by gradient')
             plt.show() #f is blue and smooth, v is green and fuzzy.
         if origin[0]==(1 or V.shape[0]):
-            print('findsaddle: Saddle out of bounds in  x (i) direction.\n')
+            print('find_saddle: Saddle out of bounds in  x (i) direction.\n')
             return
         if origin[0]==(1 or V.shape[1]):
-            print('findsaddle: Saddle out of bounds in  y (j) direction.\n')
+            print('find_saddle: Saddle out of bounds in  y (j) direction.\n')
             return
         if origin[0]==(1 or V.shape[2]): 
-            print('findsaddle: Saddle out of bounds in  z (k) direction.\n')
+            print('find_saddle: Saddle out of bounds in  z (k) direction.\n')
             return
     #################################################################################################
     if dim==2: # Extrapolate to the values of A at z0.
@@ -1219,7 +1219,7 @@ def findsaddle(V,X,Y,Z,dim,Z0=None):
             V2=v1+(v2-v1)*(Z0-Z[Ks])/(Z[Ks+1]-Z[Ks])
         V2s=V2.shape
         if len(V2s)!=2: # Old: What is this supposed to check? Matlab code: (size(size(A2),2) ~= 2)
-            return('Problem with findsaddle.py dimensionalities. It is {}.'.format(V2s))
+            return('Problem with find_saddle.py dimensionalities. It is {}.'.format(V2s))
         f=V2/float(np.max(abs(V2)))
         [Ex,Ey]=np.gradient(f)
         E=np.sqrt(Ex**2+Ey**2)
@@ -1237,15 +1237,15 @@ def findsaddle(V,X,Y,Z,dim,Z0=None):
                     Is=i
                     Js=j
         if Is==1 or Is==V.shape[0]:
-            print('findsaddle: Saddle out of bounds in  x (i) direction.\n')
+            print('find_saddle: Saddle out of bounds in  x (i) direction.\n')
             return
         if Js==1 or Js==V.shape[1]:
-            print('findsaddle: Saddle out of bounds in  y (j) direction.\n')
+            print('find_saddle: Saddle out of bounds in  y (j) direction.\n')
             return
         origin=[Is,Js,Ks]
     return origin
 
-def meshslice(V,n,X,Y,Z): 
+def mesh_slice(V,n,X,Y,Z): 
     """Plots successive slices of matrix V in the direction given by n.
     n=1[I],2[J],3[K]
     x,y,z are vectors that define the grid in three dimensions
@@ -1288,7 +1288,7 @@ def meshslice(V,n,X,Y,Z):
         1:('horizontal radial (mm)','horizontal axial (mm)'),
         2:('height (mm)','horizontal radial (mm)')
         }   
-    class animated(object): # 4D, plots f(x,y,z0) specific to meshslice.
+    class animated(object): # 4D, plots f(x,y,z0) specific to mesh_slice.
         def __init__(self,I,J,q):
             self.fig = plt.figure()
             self.ax = self.fig.add_subplot(111, projection='3d')
@@ -1312,7 +1312,7 @@ def meshslice(V,n,X,Y,Z):
         anim.drawNow(ii,q,n)
     return plt.show()
 
-def plotpot(V,X,Y,Z,key='1D plots',tit=None,ylab=None,origin=None): 
+def plot_potential(V,X,Y,Z,key='1D plots',tit=None,ylab=None,origin=None): 
     """V is a 3D matrix containing an electric potential and must solve Laplace's equation
     X,Y,Z are the vectors that define the grid in three directions
     
@@ -1323,18 +1323,18 @@ def plotpot(V,X,Y,Z,key='1D plots',tit=None,ylab=None,origin=None):
     William Python Jan 2014"""
     
     import matplotlib.pyplot as plt
-    print 'running plotpot...',key
+    print 'running plot_potential...',key
     if origin==None:
-        from all_functions import exactsaddle,findsaddle
-        #origin=exactsaddle(V,X,Y,Z,3) # these are coordinates, not indices; findsaddle instead
-        origin=findsaddle(V,X,Y,Z,3)
+        from all_functions import exact_saddle,find_saddle
+        #origin=exact_saddle(V,X,Y,Z,3) # these are coordinates, not indices; find_saddle instead
+        origin=find_saddle(V,X,Y,Z,3)
     if (key==0 or key=='no plots'):
         return 
     if (key==1 or key=='2D plots' or key==3 or key=='both'): # 2D Plots, animation
-        from all_functions import meshslice
-        meshslice(V,0,X,Y,Z) 
-        meshslice(V,1,X,Y,Z) 
-        meshslice(V,2,X,Y,Z) 
+        from all_functions import mesh_slice
+        mesh_slice(V,0,X,Y,Z) 
+        mesh_slice(V,1,X,Y,Z) 
+        mesh_slice(V,2,X,Y,Z) 
     if (key==2 or key=='1D plots' or key==3 or key=='both'): # 1D Plots, 3 subplots
         ########## Plot I ##########
         axis=X
@@ -1428,7 +1428,7 @@ def plotN(trap,convention=None): # Possible to add in different conventions late
     fig.colorbar(surf)
     return plt.show()
 
-def spherharmxp(V,X,Y,Z,Xc,Yc,Zc,Order):
+def spher_harm_exp(V,X,Y,Z,Xc,Yc,Zc,Order):
     """V is a 3D matrix containing an electric potential and must solve Laplace's equation
     X,Y,Z are the vectors that define the grid in three directions
      
@@ -1497,7 +1497,7 @@ def spherharmxp(V,X,Y,Z,Xc,Yc,Zc,Order):
     Mj=Mj[0] # array of coefficients
     return Mj
 
-def spherharmcmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order): 
+def spher_harm_cmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order): 
     """This function computes the potential V from the spherical harmonic coefficients,
     which used to be: V=C1*Y00+C2*Y10+C3*Y11c+C4*Y11s+...
     There the Ynm are chosen to be real, and subscript c corresponds to cos(m*phi) dependence,
@@ -1568,7 +1568,7 @@ def spherharmcmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order):
     V=W.reshape(nx,ny,nz,order='C').copy()
     return V  
 
-def spherharmq(V,C,Xc,Yc,Zc,Order,Xe,Ye,Ze,tit):
+def spher_harm_qlt(V,C,Xc,Yc,Zc,Order,Xe,Ye,Ze,tit):
     """This function determines the "quality" of the expansion of potential V in spherical harmonics
     It usd to be: (V=C00*Y00+C10*Y10+C11c*Y11c+C11s*Y11s+... )
     there the Ynm are chosen to be real, and subscript c corresponds to
@@ -1596,7 +1596,7 @@ def spherharmq(V,C,Xc,Yc,Zc,Order,Xe,Ye,Ze,tit):
     import matplotlib.pyplot as plt
     s=V.shape
     nx,ny,nz=s[0],s[1],s[2]
-    Vfit = spherharmcmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order) 
+    Vfit = spher_harm_cmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order) 
     
     # subtract lowest from each and then normalize
     Vblock = np.ones((nx,ny,nz))
@@ -1619,20 +1619,20 @@ def spherharmq(V,C,Xc,Yc,Zc,Order,Xe,Ye,Ze,tit):
     plt.show() 
     return f
 
-def sumofefield(r,V,X,Y,Z,exactsaddle=True):
+def sum_of_e_field(r,V,X,Y,Z,exact_saddle=True):
     """V is a 3D matrix containing an electric potential and must solve Laplace's equation
     X,Y,Z are the vectors that define the grid in three directions
     r: center position for the spherical harmonic expansion
     Finds the weight of high order multipole terms compared to the weight of
     second order multipole terms in matrix V, when the center of the multipoles
     is at x0,y0,z0.
-    Used by exactsaddle for 3-d saddle search.
-    Note that order of outputs for spherharmxp are changed, but 1 to 3 should still be E field.
+    Used by exact_saddle for 3-d saddle search.
+    Note that order of outputs for spher_harm_exp are changed, but 1 to 3 should still be E field.
     """
     import numpy as np
     x0,y0,z0=r[0],r[1],r[2]
-    from all_functions import spherharmxp
-    c=spherharmxp(V,X,Y,Z,x0,y0,z0,3) #Update these variables by abstraction.
+    from all_functions import spher_harm_exp
+    c=spher_harm_exp(V,X,Y,Z,x0,y0,z0,3) #Update these variables by abstraction.
     print ('Checking saddle: ({0},{1},{2})'.format(x0,y0,z0))
     s=c**2
     f=sum(s[1:3])/sum(s[4:9])
@@ -1641,7 +1641,7 @@ def sumofefield(r,V,X,Y,Z,exactsaddle=True):
     print 'Guess:',real_f
     return real_f
 
-def trapdepth(V,X,Y,Z,Im,Jm,Km,debug=False): 
+def trap_depth(V,X,Y,Z,Im,Jm,Km,debug=False): 
     """Find the trap depth for trap potential V.
     Returns D,x,y,z.
     The trapping position is the absolute minimum in the potential function.
@@ -1674,7 +1674,7 @@ def trapdepth(V,X,Y,Z,Im,Jm,Km,debug=False):
     import numpy as np
     import matplotlib.pyplot as plt
     if len(V.shape)!=3:
-        return('Problem with findsaddle.py dimensionalities.\n')
+        return('Problem with find_saddle.py dimensionalities.\n')
     N1,N2,N3=V.shape
     N=N1*N2*N3
     f=V
@@ -1722,9 +1722,9 @@ def trapdepth(V,X,Y,Z,Im,Jm,Km,debug=False):
     if debug: 
         check=float(raw_input('How many indices away must the escape point be?'))   
     if distance<check:
-        print('trapdepth.py:\nEscape point too close to trap minimum.\nImprove grid resolution or extend grid.\n')
+        print('trap_depth.py:\nEscape point too close to trap minimum.\nImprove grid resolution or extend grid.\n')
     if escapeHeight>0.2:
-        print('trapdepth.py:\nEscape point parameter too high.\nImprove grid resolution or extend grid.\n')
+        print('trap_depth.py:\nEscape point parameter too high.\nImprove grid resolution or extend grid.\n')
     D=escapeHeight-Vm
     [Ie,Je,Ke]=escapePosition
     [Xe,Ye,Ze]=[X[Ie],Y[Je],Z[Ke]]            
