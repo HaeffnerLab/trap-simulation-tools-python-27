@@ -85,17 +85,17 @@ def test_cube():
         output.close()
         
         
-    from all_functions import plotpot,findsaddle,exactsaddle,set_dc,dcpotential_instance,spherharmxp
+    from all_functions import plot_potential,find_saddle,exact_saddle,set_dc,dc_potential,spher_harm_exp
     from project_parameters import dcVoltages, manualElectrodes,weightElectrodes
     #print plotpot(p.EL_DC_22,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
     V=p.EL_DC_4
-    print np.real(spherharmxp(V,0,0,0,p.X,p.Y,p.Z,2))
+    print np.real(spher_harm_exp(V,0,0,0,p.X,p.Y,p.Z,2))
      
     #VMULT= set_dc()
     VMULT= dcVoltages       #all 1
     VMAN = manualElectrodes #all 0
     IMAN = weightElectrodes #all 0
-    Vtest = dcpotential_instance('C:\\Python27\\trap_simulation_software\\data\\temporary4.pkl',VMULT,VMAN,IMAN,[Ex,Ey,Ez],save)
-    #print plotpot(Vtest,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
+    Vtest = dc_potential('C:\\Python27\\trap_simulation_software\\data\\temporary4.pkl',VMULT,VMAN,IMAN,[Ex,Ey,Ez],save)
+    #print plot_potential(Vtest,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
      
     return
