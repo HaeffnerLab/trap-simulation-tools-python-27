@@ -6,5 +6,5 @@ from test_cube import test_cube
 #print(get_trap())
 #print(expand_field())
 #print(trap_knobs())
-#print(set_dc()) 
-print (post_process_trap()) # test data has no saddle for multipoleControls=True for setdc
+print(set_dc()) 
+#print (post_process_trap()) # test data has no saddle for multipoleControls=True for setdc

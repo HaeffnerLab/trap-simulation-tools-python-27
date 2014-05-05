@@ -422,7 +422,7 @@ def expand_field():
     tc.EL_RF=np.fliplr(tc.EL_RF)
     tc.EL_RF=np.flipud(tc.EL_RF)
     if debug: 
-        plot_potential(tc.EL_RF,X,Y,Z,'1D plots','EL_RF',[Irf,Jrf,Krf])
+        plot_potential(tc.EL_RF,X,Y,Z,'1D plots','EL_RF','V (Volt)',[Irf,Jrf,Krf])
   
     #2) Expand the rf about its saddle point at the trapping position, save the quadrupole components.
     print 'Expanding RF about saddle point'
@@ -434,9 +434,9 @@ def expand_field():
     
     #3) Regenerate each DC electrode
     M1=np.zeros((N,NUM_DC)) 
-    for el in range(0,NUM_DC): # do not include the constant term; el starts at 0 otherwise
+    for el in range(21,NUM_DC): # do not include the constant term; el starts at 0 otherwise
         print ('Expanding DC Electrode {} ...'.format(el+1))
-        if tc.electrodeMapping[el,1]:
+        if tc.electrodeMapping[el,0]==tc.electrodeMapping[el,1]:
             multipoleDCVoltages = np.zeros(NUM_DC)
             multipoleDCVoltages[el] = 1 
             #Vdc = tf.potentials['EL_DC_{}'.format(el+1)]
@@ -457,9 +457,9 @@ def expand_field():
           manualDCVoltages = np.zeros(NUM_DC)
           manualDCVoltages[el]  = 1 
           print ('Building new trap instance for Electrolde {}...'.format(el+1))
-          Vdc = dc_potential(multipoleDCVoltages,manualDCVoltages,tc.manualElectrodes,E[0],E[1],E[2],NUM_DC,x,y,z)
+          Vdc = dc_potential(trap,multipoleDCVoltages,manualDCVoltages,tc.manualElectrodes,E)
           if debug:
-              plot_potential(Vdc,Irf,Jrf,Krf,'1D plots',sprintf('EL_{} DC Potential'.format(el)),'V (Volt)')
+              plot_potential(Vdc,X,Y,Z,'1D plots',('Manual EL_{} DC Potential'.format(el+1)),'V (Volt)',[Irf,Jrf,Krf])
           print ('Applying correction to Electrode {} ...'.format(el+1))
           Q = spher_harm_exp(Vdc,Xrf+Xcorrection,Yrf+Ycorrection,Zrf,X,Y,Z,int(order[el]))                        
           print ('Regenerating Electrode {} potential...'.format(el+1))
@@ -716,14 +716,14 @@ def post_process_trap():
     #################### 1) analyze the RF potential #################### 
     [Irf,Jrf,Krf] = find_saddle(data.EL_RF,X,Y,Z,2,Zval)
     Vrf = RFampl*data.EL_RF
-    plot_potential(V*10**7,X,Y,Z,rfplot,'initial V','V_{rf} (Volt)',[Irf,Jrf,Krf])
-    plot_potential(Vrf*10**-3,X,Y,Z,rfplot,'RF potential','V_{rf} (Volt)',[Irf,Jrf,Krf])
+    plot_potential(V,X,Y,Z,rfplot,'initial V','V_{rf} (Volt)',[Irf,Jrf,Krf])
+    plot_potential(Vrf,X,Y,Z,rfplot,'RF potential','V_{rf} (Volt)',[Irf,Jrf,Krf])
     if E == None:      # check the initial guess of the E field
         return 'There is no E field. Create an instance with dc_potential.'
     else:
         Vdc = dc_potential(trap,VMULT,VMAN,IMAN,E)                                                         
         [Idum,Jdum,Kdum] =  find_saddle(Vdc,X,Y,Z,2,Zval)
-        plot_potential(Vdc*10**7,X,Y,Z,dcplot,'DC potential (stray field included)','V_{dc} (Volt)',[Idum,Jdum,Kdum])
+        plot_potential(Vdc,X,Y,Z,dcplot,'DC potential (stray field included)','V_{dc} (Volt)',[Idum,Jdum,Kdum])
         
     #################### 2) findEfield ####################
     def findE(Efield,x,y,z,X,Y,Z):
@@ -746,7 +746,7 @@ def post_process_trap():
             dist0 = d_e(E0,Vdc,data,x,y,z,X,Y,Z,Zval)
             Vdum = dc_potential(trap,VMULT,VMAN,IMAN,E0[0],E0[1],E0[2])   
             [Idum,Jdum,Kdum] =  find_saddle(Vdum,X,Y,Z,2,Zval)
-            plot_potential(Vdum*10**7,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Irf,Jrf,Krf])
+            plot_potential(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Irf,Jrf,Krf])
             st = raw_input('Happy (y/n)?\n')
             if st=='y': 
                 print 'findEfield complete'
@@ -758,7 +758,7 @@ def post_process_trap():
             dist0 = d_e(E0,Vdc,data,x,y,z,X,Y,Z,Zval)
             Vdum = dc_potential(trap,VMULT,VMAN,IMAN,E0[0],E)
             [Idum,Jdum,Kdum] =  find_saddle(Vdum,X,Y,Z,2,Zval)
-            plot_potential(Vdum*10**7,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Idum,Jdum,Kdum])
+            plot_potential(Vdum,X,Y,Z,'1D plots','Initial guess for DC potential','V_{dc} (Volt)',[Idum,Jdum,Kdum])
             print 'findEfield complete'
             return dist0
     # actually find E field
@@ -794,7 +794,7 @@ def post_process_trap():
     #[XRF,YRF,ZRF] = find_saddle(data.EL_RF,X,Y,Z,2,Zval)
     #[XDC,YDC,ZDC] = find_saddle(Vdc,X,Y,Z,3,Zval)
     print ('RF saddle: ({0},{1},{2})\nDC saddle ({3},{4},{5}).'.format(XRF,YRF,ZRF,XDC,YDC,ZDC))
-    plot_potential(Vdc*10**7,X,Y,Z,dcplot,'Compensated DC potential','V_{dc} (V)',[Irf,Jrf,Krf])
+    plot_potential(Vdc,X,Y,Z,dcplot,'Compensated DC potential','V_{dc} (V)',[Irf,Jrf,Krf])
     [IDC,JDC,KDC] = find_saddle(Vdc,X,Y,Z,2,Zval)
     [fx,fy,fz,theta,Depth,rx,ry,rz,xe,ye,ze,superU] = pfit(trap,E,f,RFampl)
     Qrf = spher_harm_exp(Vrf,XRF,YRF,ZRF,X,Y,Z,2)           
@@ -894,11 +894,11 @@ def dc_potential(trap,VMULT,VMAN,IMAN,E,update=None):
     Vout = np.zeros((p['EL_DC_1'].shape[0],p['EL_DC_1'].shape[1],p['EL_DC_1'].shape[2]))
     
     # build up the potential from the manual DC electrodes
-    for ii in range(nue-1):
-        if int(IMAN[ii])==1:
-            Vout = Vout + VMAN[ii]*p['mEL_DC_{}'.format(ii+1)]
+    for ii in range(nue):
+        if int(VMAN[ii])==1:
+            Vout = Vout + IMAN[ii]*p['mEL_DC_{}'.format(ii+1)]
     # build up the potential from the normal DC elctrodes
-    for ii in range(nue-1):
+    for ii in range(nue):
         Vout = Vout + VMULT[ii]*p['EL_DC_{}'.format(ii+1)]
     # subtract the stray E field
     Vout = Vout-Ex*x-Ey*y-Ez*z
@@ -988,18 +988,21 @@ def pfit(trap,E,driveFrequence,driveAmplitude):
     Esq = (driveAmplitude*1e3*tf.potentials.EL_RF)**2 
 
     #3) plotting pseudopotential, etc; outdated?
-    PseudoPhi = Esq1/(4*mass*Omega**2) 
+    PseudoPhi = Esq1*e/(4*mass*Omega**2) 
     print 'Pseudo: ',np.amax(PseudoPhi)
-    plot_potential(PseudoPhi*10**-15,X,Y,Z,'1D plots','Pseudopotential','U_{ps} (eV)',[Irf,Jrf,Krf])
+    plot_potential(Ex,X,Y,Z,'1D plots','Ex','U_{ps} (eV)',[Irf,Jrf,Krf])
+    plot_potential(Ey,X,Y,Z,'1D plots','Ey','U_{ps} (eV)',[Irf,Jrf,Krf])
+    plot_potential(Ez,X,Y,Z,'1D plots','Ez','U_{ps} (eV)',[Irf,Jrf,Krf])
+    plot_potential(PseudoPhi,X,Y,Z,'1D plots','Pseudopotential','U_{ps} (eV)',[Irf,Jrf,Krf])
     
     print 'VL: ',np.amax(VL)
-    plot_potential(VL*10**7,X,Y,Z,'1D plots','VL','U_{sec} (eV)',[Irf,Jrf,Krf])
-    U = PseudoPhi*10**-15+VL*10**7 # total trap potential
+    plot_potential(VL,X,Y,Z,'1D plots','VL','U_{sec} (eV)',[Irf,Jrf,Krf])
+    U = PseudoPhi+VL # total trap potential
     superU = U
     print 'TrapPotential: ',np.amax(U)
     plot_potential(U,X,Y,Z,'1D plots','TrapPotential','U_{sec} (eV)',[Irf,Jrf,Krf])
     #[I,J,K] = find_saddle(U/np.amax(U),X,Y,Z,2,Zval) # ???
-    plot_potential(tf.potentials.EL_RF*10**-3,X,Y,Z,'1D plots','RF potential','(eV)',[Irf,Jrf,Krf])
+    plot_potential(tf.potentials.EL_RF,X,Y,Z,'1D plots','RF potential','(eV)',[Irf,Jrf,Krf])
     
     #4) determine trap frequencies and tilt in radial directions
     Uxy = U[Irf-3:Irf+3,Jrf-3:Jrf+3,Krf]
@@ -1317,21 +1320,23 @@ def plot_potential(V,X,Y,Z,key='1D plots',tit=None,ylab=None,origin=None):
         ########## Plot I ##########
         axis=X
         projection=V[:,origin[1],origin[2]]
+        #projection=V[origin[0],:,origin[2]]
         fig=plt.figure()
         plt.subplot(2,2,1)
         plt.plot(axis,projection) 
         plt.title(tit)
         plt.xlabel('x (mm)')
-        plt.ylabel('Interpreter')
+        plt.ylabel(ylab)
         ######### Plot J ##########
         axis=Y
         projection=V[origin[0],:,origin[2]]
+        #projection=V[:,origin[1],origin[2]]
         #fig=plt.figure() # for individual plots instead of subplots
         plt.subplot(2,2,2)
         plt.plot(axis,projection)
         #plt.title(tit)
         plt.xlabel('y (mm)')
-        plt.ylabel('Interpreter')
+        plt.ylabel(ylab)
         ######### Plot K ##########
         axis=Z
         projection=V[origin[0],origin[1],:]
@@ -1340,7 +1345,7 @@ def plot_potential(V,X,Y,Z,key='1D plots',tit=None,ylab=None,origin=None):
         plt.plot(axis,projection)
         #plt.title(tit)
         plt.xlabel('z (mm)')
-        plt.ylabel('Interpreter')
+        plt.ylabel(ylab)
     return plt.show()   
 
 def p2d(V,x,y): 
@@ -1473,7 +1478,7 @@ def spher_harm_exp(V,X,Y,Z,Xc,Yc,Zc,Order):
     Yj=Yj.T
     Mj=np.linalg.lstsq(Yj,W)
     Mj=Mj[0] # array of coefficients
-    return Mj
+    return np.real(Mj)
 
 def spher_harm_cmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order): 
     """This function computes the potential V from the spherical harmonic coefficients,
@@ -1544,7 +1549,7 @@ def spher_harm_cmp(C,Xc,Yc,Zc,Xe,Ye,Ze,Order):
     Yj=Yj.T 
     W=np.dot(Yj,C)
     V=W.reshape(nx,ny,nz,order='C').copy()
-    return V  
+    return np.real(V)
 
 def spher_harm_qlt(V,C,Xc,Yc,Zc,Order,Xe,Ye,Ze,tit):
     """This function determines the "quality" of the expansion of potential V in spherical harmonics

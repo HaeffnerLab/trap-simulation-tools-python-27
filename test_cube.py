@@ -11,7 +11,7 @@ def test_cube():
     import datetime
     from treedict import TreeDict
     savePath = 'C:\\Python27\\trap_simulation_software\\data\\' # directory to save data at
-    name = 'tk_test2'    # name to save trapping field as 
+    name = 'manual_test'    # name to save trapping field as 
     save = True
     nue = 22
     n = 11
@@ -48,16 +48,20 @@ def test_cube():
     p.EL_DC_11= U3*u3+U4*u4
     p.EL_DC_12= U3*u3+U5*u5
     p.EL_DC_13= U4*u4+U5*u5
-    p.EL_DC_14= np.zeros((n,n,n))+u1
-    p.EL_DC_15= np.zeros((n,n,n))+u2
-    p.EL_DC_16= np.zeros((n,n,n))+u3
-    p.EL_DC_17= np.zeros((n,n,n))+u4
-    p.EL_DC_18= np.zeros((n,n,n))+u5
-    p.EL_DC_19= np.zeros((n,n,n))
-    p.EL_DC_20= np.zeros((n,n,n))
-    p.EL_DC_21= np.zeros((n,n,n))
+    p.EL_DC_14= np.zeros((n,n,n))#+u1
+    p.EL_DC_15= np.zeros((n,n,n))#+u2
+    p.EL_DC_16= np.zeros((n,n,n))#+u3
+    p.EL_DC_17= np.zeros((n,n,n))#+u4
+    p.EL_DC_18= np.zeros((n,n,n))#+u5
+    p.EL_DC_19= np.zeros((n,n,n))#+u5/2
+    p.EL_DC_20= np.zeros((n,n,n))#+u5/3
+    p.EL_DC_21= np.zeros((n,n,n))#+u5/4
     p.EL_DC_22= u3
     p.EL_RF= p.EL_DC_22
+    
+    
+    p.mEL_DC_22= u3
+    
     
     c=trap.configuration
     c.rfBias=False
@@ -68,6 +72,7 @@ def test_cube():
                                    [11,11],[12,12],[13,13],[14,14],[15,15],[16,16],[17,17],[18,18],
                                    [19,19],[20,20],[21,21],[22,22]])                         
     c.manualElectrodes = np.zeros(nue)
+    #c.manualElectrodes[nue-1] = 999
     c.usedMultipoles = [1,1,1,1,1,1,1,1]
     c.position = 0 
     c.dataPointsPerAxis = np.shape(p.Z)
@@ -83,19 +88,9 @@ def test_cube():
         output = open(name,'wb')
         pickle.dump(trap,output)
         output.close()
-        
-        
+         
     from all_functions import plot_potential,find_saddle,exact_saddle,set_dc,dc_potential,spher_harm_exp
     from project_parameters import dcVoltages, manualElectrodes,weightElectrodes
-    #print plotpot(p.EL_DC_22,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
-    V=p.EL_DC_4
-    print np.real(spher_harm_exp(V,0,0,0,p.X,p.Y,p.Z,2))
-     
-    #VMULT= set_dc()
-    VMULT= dcVoltages       #all 1
-    VMAN = manualElectrodes #all 0
-    IMAN = weightElectrodes #all 0
-    Vtest = dc_potential('C:\\Python27\\trap_simulation_software\\data\\temporary4.pkl',VMULT,VMAN,IMAN,[Ex,Ey,Ez],save)
-    #print plot_potential(Vtest,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
-     
+    #print plot_potential(p.EL_DC_22,p.X,p.Y,p.Z,'1D plots','title','ylab',[0,0,0])
+ 
     return
