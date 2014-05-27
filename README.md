@@ -28,8 +28,9 @@ other trap geometry. Our convention for numbering the trap electrodes is:
      is 1. As you move up along the axis (staying on the same side of the RF rail you count up). When you 
      reach the top, you cross to the right side of the RF rail and start counting at the bottom. When you 
      reach the top, you cross to the inside of the RF rail and count DC electrodes from bottom to top. When 
-     you are done counting all the DCs, you count the RF electrode(s). Below is an example with N=12:
-      ___________________
+     you are done counting all the DCs, you count the RF electrode(s). 
+     Below is an example with N=12 (click "edit" to view properly as raw text):
+      __________________
      | 05 | |    | | 10 |
      |____| |    | |____|
      | 04 | |    | | 09 |
