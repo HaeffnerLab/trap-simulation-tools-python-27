@@ -1,5 +1,11 @@
 trap-simulation-tools-python-27
 ===============================
+---------
+0. Update
+---------
+This is the old version of the python tools. Please see trap-sim-tools-python for the updated ones.
+
+
 ---------------
 1. Introduction
 ---------------
