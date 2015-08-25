@@ -31,18 +31,18 @@ dcplot = 'no plots' # dimensions to plot DC with plotpot
 ################################ import_data ####################################
 #################################################################################
 """Includes project parameters relevant to import_data to build entire project in one script."""
-simulationDirectory='C:\\Python27\\trap_simulation_software\\data\\text\\' # location of the text files
-baseDataName = 'synthetic-pt' # Excludes the number at the end to refer to a set of text file simulations
+simulationDirectory='/home/soenke/Documents/pythonPrograms/trap-simulation-tools-python-27/' # location of the text files
+baseDataName = 'Ftrap_E2_nowire_field' # Excludes the number at the end to refer to a set of text file simulations
 projectName = 'escape' # arbitrarily named by user
 timeNow = datetime.datetime.now().date() # the present date and time 
 fileName = projectName+'_'+str(timeNow)  # optional addition to name to create data structures with otherwise same name
 if not useDate:
     fileName = projectName
-simCount = [1,2]            # index of initial simulation and number of simulations; old nStart and nMatTot
-dataPointsPerAxis = 5       # old NUM_AXIS 5, the number of sata points along each axis of the cubic electrode potential
-numElectrodes = 14          # old NUM_ELECTRODES, later nonGroundElectrodes, includes the final DC that is really RF
-savePath = 'C:\\Python27\\trap_simulation_software\\data\\' # directory to save data at
-perm = [0,1,2] 
+simCount = [1,1]            # index of initial simulation and number of simulations; old nStart and nMatTot
+dataPointsPerAxis = 51       # old NUM_AXIS 5, the number of sata points along each axis of the cubic electrode potential
+numElectrodes = 11          # old NUM_ELECTRODES, later nonGroundElectrodes, includes the final DC that is really RF
+savePath = '/home/soenke/Documents/pythonPrograms/trap-simulation-tools-python-27/' # directory to save data at
+perm = [0,2,1] 
 ###COORDINATES Nikos code uses y- height, z - axial, x - radial
 #if drawing uses x - axial, y - radial, z - height, use perm = [1,2,0] (Euro trap)
 #if drawing uses y - axial, x - radial, z - height, use perm = [0,2,1] (Sqip D trap, GG trap)
@@ -54,10 +54,10 @@ perm = [0,1,2]
 """fieldConfig, previously trapConfiguration; not all variables will be passed to output
 Parameters used for get_trapping_field, expand_field, and trap_knobs
 Some of the required parameters are listed with import config."""
-position = 0 # trapping position along the trap axis (microns)
-zMin = -4    # lowest value along the rectangular axis
-zMax = 4     # highest value along the rectangular axis
-zStep = 5    # range of each simulation
+position = 310 # trapping position along the trap axis (microns)
+zMin = 260    # lowest value along the rectangular axis
+zMax = 360     # highest value along the rectangular axis
+zStep = 100    # range of each simulation
 name = projectName # name of final, composite, single-simulation data structure; could define with string here       
 
 
@@ -84,11 +84,10 @@ electrodeMapping determines the pairing.
 manualElectrodes determines the electrodes which are under manual voltage control. 
 It has numElectrodes elements (i.e. they are not connected to an arbitrary voltage, not to multipole knobs).
 All entries != 0 are under manual control, and entries = 0 are not under manual control."""  
-electrodeMapping = np.array([[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],
-                    [11,11],[12,12],[13,13]])                                               
-dcVoltages       = [1,1,1,1,1,1,1,1,1,1,1,1,1] # VMULT for expand_field before setdc can be run                
-manualElectrodes = [0,0,0,0,0,0,0,0,0,0,0,0,0] # VMAN for dcpotential_instance in expand_field
-weightElectrodes = [0,0,0,0,0,0,0,0,0,0,0,0,0] # IMAN for dcpotential_instance in expand_field
+electrodeMapping = np.array([[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10]])                                               
+dcVoltages       = [1,1,1,1,1,1,1,1,1,1] # VMULT for expand_field before setdc can be run                
+manualElectrodes = [0,0,0,0,0,0,0,0,0,0] # VMAN for dcpotential_instance in expand_field
+weightElectrodes = [0,0,0,0,0,0,0,0,0,0] # IMAN for dcpotential_instance in expand_field
 usedMultipoles   = [1,1,1,1,1,1,1,1]
 # check to make sure mapping and manual are consistent with each other and the number of electrodes
 last_map = 0
@@ -121,7 +120,7 @@ multipoleControls = True          # sets the control parameters to be the U's (t
 # (by regularization I mean minimizing the norm of el with addition of vectors belonging to the kernel of tf.config.multipoleCoefficients)
 mass = 40*mp # 40 because of Ca ions
 driveAmplitude = 10**10     # Applied RF amplitude for ppt3 analysis; must be large with test code in order to get escape
-driveFrequency = 40e6    # RF frequency for ppt3 analysis
+driveFrequency = 37e6    # RF frequency for ppt3 analysis
 E = [.001,.001,.001]     # Stray electric field at the ion E = [Ex,Ey.Ez] (valid if multipoleControls == True); also in project_parameters
 U1,U2,U3,U4,U5 = 1,1,1,1,1#.2,1,.2,0,0 # DC Quadrupoles that I want the trap to generate at the ion (valid if multipoleControls == True)
 #U1,U2,U3,U4,U5 = 0.5*U1*10**-6,0.5*U2*10**-6,U3*10**-6,U4*10**-6,U5*10**-6 # rescaling to mm as 1/r^2

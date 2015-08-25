@@ -85,7 +85,6 @@ def import_data():
     # renaming for convenience
     na, ne = dataPointsPerAxis, numElectrodes 
     [startingSimulation,numSimulations] = simCount
-    
     # iterate through each simulation text file
     for iterationNumber in range(startingSimulation,numSimulations+1):        
         #########################################################################################
@@ -230,10 +229,14 @@ def get_trap():
         file = open(pathName+'1.pkl','rb')
         tf.potentials = pickle.load(file)
         file.close()
+        potential=tf.potentials
+        ne=potential.numElectrodes
         trap = tf
         c=trap.configuration
         c.position = position 
         c.numElectrodes = ne # also listed in systemInformation
+#        c.charge = charge
+#        c.mass = mass        
         c.numUsedElectrodes = ne-1 # will be changed in trap_knobs to fit electrodeMapping and manual electrodes, does not include RF
         trap.configuration=c
         if save:
